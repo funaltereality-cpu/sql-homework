@@ -6,6 +6,8 @@ USE tours;
 -- -----------------------------------------------------
 -- Table client
 -- -----------------------------------------------------
+drop table if exists client;
+
 CREATE TABLE IF NOT EXISTS client (
   client_id INT NOT NULL PRIMARY KEY auto_increment,
   first_name VARCHAR(50) NOT NULL,
@@ -13,25 +15,26 @@ CREATE TABLE IF NOT EXISTS client (
   phone VARCHAR(20) NOT NULL UNIQUE,
   email varchar(100) NOT NULL UNIQUE,
   note VARCHAR(255) DEFAULT NULL,
-  status ENUM('new', 'repeated', 'VIP') DEFAULT 'new'
+  status ENUM('new', 'repeated', 'VIP') DEFAULT 'new',
+  CHECK(REGEXP_LIKE(phone, '^\\+[1-9][0-9]{1,14}$')) #стандарт проверки под Е.164
   );
   -- изменение таблицы
 ALTER TABLE client
 ADD address VARCHAR(255) NULL;
 
 INSERT INTO client (first_name, last_name, phone, email) 
-VALUES ('Valentina','Rossi','375295888878', 'valentina@mail.ru'),
-('Jorje','Rossi','375298888889', 'jorje@mail.ru'),
-('Lucia','Smith','375298888890', 'lucia@mail.ru'),
-('Sam','Ivanov','375298888881', 'sam@mail.ru'),
-('Bella','Petrov','375298883889', 'bella@mail.ru'),
-('Jack','Pink','375298888878', 'jack@mail.ru'),
-('Marie','Mouth','375294988889', 'mariee@mail.ru'),
-('Ted%','Grizz','375293888889', 'ted@mail.ru'),
-('Ruth','Lazlo','375298858889', 'ruth@mail.ru'),
-('Victor','Herr','375296888889', 'victor@mail.ru'),
-('Thomas','Mann','375298788889', 'thomas@mail.ru'),
-('Ninon', 'De Lanclo', '33098765446', 'ninon@paris.fr');
+VALUES ('Valentina','Rossi','+375295868878', 'valentina@mail.ru'),
+('Jorje','Rossi','+375298888889', 'jorje@mail.ru'),
+('Lucia','Smith','+375298888890', 'lucia@mail.ru'),
+('Sam','Ivanov','+375298888881', 'sam@mail.ru'),
+('Bella','Petrov','+375298883889', 'bella@mail.ru'),
+('Jack','Pink','+375298888878', 'jack@mail.ru'),
+('Marie','Mouth','+375294988889', 'mariee@mail.ru'),
+('Ted%','Grizz','+375293888889', 'ted@mail.ru'),
+('Ruth','Lazlo','+375298858889', 'ruth@mail.ru'),
+('Victor','Herr','+375296888889', 'victor@mail.ru'),
+('Thomas','Mann','+375298788889', 'thomas@mail.ru'),
+('Ninon', 'De Lanclo', '+330987654460', 'ninon@paris.fr');
 
 SELECT * FROM client;
 -- -----------------------------------------------------
@@ -56,24 +59,45 @@ SELECT * FROM city;
 -- -----------------------------------------------------
 -- Table operator
 -- -----------------------------------------------------
+drop table if exists operator;
+
 CREATE TABLE IF NOT EXISTS operator (
     operator_id INT NOT NULL PRIMARY KEY auto_increment,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     operator_code VARCHAR(15) NOT NULL unique,
     email varchar(100) NOT NULL UNIQUE,
-    phone VARCHAR(20) NOT NULL UNIQUE
-);
+    phone VARCHAR(20) NOT NULL UNIQUE,
+    CHECK(REGEXP_LIKE(phone, '^\\+375(29|33|25|44)[0-9]{7}$')))
+    ;
 
-INSERT INTO operator (first_name, last_name, operator_code, email, phone) 
-VALUES ('Elena','Smith','OP4889','375296888329', 'elenafb@mail.ru'),
-('Misha','Taz','OX7865','37529519320','mishafb@mail.ru'),
-('Kate','Bush','KL1023','375291284329','katefb@mail.ru'),
-('Alex','Mir','MN5679','375291284586','alexfb@mail.ru'),
-('Marie','Curie','BY5432', '375291210320', 'mariefb@mail.ru');
+INSERT INTO operator (first_name, last_name, operator_code, phone, email) 
+VALUES ('Elena','Smith','OP4889','+375296888329', 'elenafb@mail.ru'),
+('Misha','Taz','OX7865','+375295193204','mishafb@mail.ru'),
+('Kate','Bush','KL1023','+375291284329','katefb@mail.ru'),
+('Alex','Mir','MN5679','+375251284586','alexfb@mail.ru'),
+('Marie','Curie','BY5432', '+375331210320', 'mariefb@mail.ru');
 
 SELECT * FROM operator;
+-- -----------------------------------------------------
+-- Table category Внешний ключ хранится в таблице со стороны MANY (n) в таблице trip_id
+-- -----------------------------------------------------
+drop table if exists category;
 
+CREATE TABLE IF NOT EXISTS category (
+category_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+cat_code varchar(55) NOT NULL,
+cat_name varchar(55) NOT NULL
+);
+
+INSERT INTO category (cat_code, cat_name)
+VALUES('rome1', 'Romantic tour'),
+('weeki2','Weekend tour'),
+('ex3me', 'Extreme tour'),
+('ph42', 'Photoshoot tour'),
+('killtheoctopus5', 'Culinary tour');
+
+select * from category;
 -- -----------------------------------------------------
 -- Table trip
 -- -----------------------------------------------------
@@ -83,24 +107,26 @@ CREATE TABLE IF NOT EXISTS trip (
 	trip_id INT NOT NULL PRIMARY KEY auto_increment,
     description VARCHAR(255) NULL UNIQUE,
     price DECIMAL (5,0) NOT NULL,
-    start_date DATE,
+    start_date DATE, #yyyy-mm-dd формат;
     end_date DATE,
     duration INT,
-    category ENUM ('love', 'sights', 'extreme'), #checkhere create a new table called 'category'
     max_capacity int,
     available_seats int null,
     city_id INT,
     operator_id INT,
+    category_id INT,
+    CHECK (start_date <= end_date),
     FOREIGN KEY (city_id) REFERENCES city(city_id), #check here
-    FOREIGN KEY (operator_id) REFERENCES operator(operator_id) #check here
+    FOREIGN KEY (operator_id) REFERENCES operator(operator_id), #check here
+    FOREIGN KEY (category_id) REFERENCES category(category_id)#check here
     );
     
-INSERT INTO trip (description, price, category, max_capacity, city_id, operator_id, start_date) 
-VALUES ('Weekend tour',35,'sights', 20, 1, 1, '2025-09-08'),
-('Romantic tour',28,'love', 20, 2, 1, '2025-09-28'),
-('Extreme tour',90,'extreme', NULL, 3, 2, '2025-07-04'),
-('Photoshop tour',200,'sights', 10, 4, 4, '2025-01-29'),
-('Culinary tour',350,'sights', 7, 5, 5, '2025-10-08');
+INSERT INTO trip (description, price, category_id, max_capacity, city_id, operator_id, start_date, end_date) 
+VALUES ('Weekend tour',35, 2, 20, 1, 1, '2025-09-08', '2025-09-10' ),
+('Romantic tour',28, 1, 20, 2, 1, '2025-09-28', '2025-09-30'),
+('Extreme tour',90, 3, NULL, 3, 2, '2025-07-04', '2025-07-12'),
+('Photoshoot tour',200, 4, 10, 4, 4, '2025-01-29', '2025-01-31'),
+('Culinary tour',350, 5, 7, 5, 5, '2025-10-08', '2025-10-13');
 
 SELECT * FROM trip;
 
@@ -474,7 +500,7 @@ FROM
     trip
 WHERE
     CASE
-        WHEN category = 'sights' THEN 1
+        WHEN category_id = 2 THEN 1
         ELSE 0
     END = 1;
 
@@ -482,7 +508,7 @@ WHERE
 SELECT 
     trip_id,
     description,
-    category,
+    category_id,
     max_capacity,
     start_date,
     operator_id,
@@ -492,7 +518,7 @@ SELECT
     END AS 'tour_time'
 FROM
     trip
-GROUP BY trip_id , description , category , max_capacity , start_date , operator_id
+GROUP BY trip_id , description , category_id, max_capacity , start_date , operator_id
 HAVING max_capacity > 10
 ORDER BY tour_time DESC;
  
@@ -540,17 +566,17 @@ order by 4, 1;
 
 #FULL OUTER JOIN
 
-select trip_id, city_id, description, category, o.operator_id, first_name, last_name
+select trip_id, city_id, description, category_id, o.operator_id, first_name, last_name
 from trip t
 left join operator o on o.operator_id = t.operator_id
 union #full outer join не поддерживается, но можно сделать с l&r joins + union
-select trip_id, city_id, description, category, o.operator_id, first_name, last_name
+select trip_id, city_id, description, category_id, o.operator_id, first_name, last_name
 from trip t
 right join operator o on o.operator_id = t.operator_id
 order by 1;
 
 # а можно было выше запрос чз left join
-select trip_id, city_id, description, category, o.operator_id, first_name, last_name
+select trip_id, city_id, description, category_id, o.operator_id, first_name, last_name
 from operator o
 left join trip t on o.operator_id = t.operator_id
 order by 1;
@@ -806,8 +832,8 @@ on i.trip_id = t.trip_id
 where inquiry_id is null;
 
 #возвращаем строку;
-INSERT INTO trip (trip_id, description, price, category, max_capacity, city_id, operator_id, start_date) 
-VALUES(5, 'Culinary tour',350,'sights', 7, 5, 5, '2025-10-08'); 
+INSERT INTO trip (trip_id, description, price, category_id, max_capacity, city_id, operator_id, start_date) 
+VALUES(5, 'Culinary tour',350,5, 7, 5, 5, '2025-10-08'); 
 
 -- подзапрос в DELETE c exists;
  delete from trip
@@ -815,8 +841,8 @@ VALUES(5, 'Culinary tour',350,'sights', 7, 5, 5, '2025-10-08');
  where i.trip_id = t.trip_id);
  
  #возвращаем строку
-INSERT INTO trip (trip_id, description, price, category, max_capacity, city_id, operator_id, start_date) 
-VALUES(5, 'Culinary tour',350,'sights', 7, 5, 5, '2025-10-08'); 
+INSERT INTO trip (trip_id, description, price, category_id, max_capacity, city_id, operator_id, start_date) 
+VALUES(5, 'Culinary tour',350, 5, 7, 5, 5, '2025-10-08'); 
  
 select * from trip;
 
