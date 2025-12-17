@@ -175,7 +175,7 @@ from
 employees t1
 join employees t2
 on t1.department_id = t2.department_id
-and t1.id < t2.id
+and t1.id <> t2.id
 where t1.salary = t2.salary
 ;
 
