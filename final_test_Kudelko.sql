@@ -155,7 +155,7 @@ where MONTH(hire_date) = 8 and YEAR(hire_date) = 2012
 -- 8.Сколько сотрудников имена которых начинается с одной и той же буквы? 
 -- Сортировать по количеству. Показывать только те где количество больше 1;
 
-SELECT name_count
+SELECT name_count, first_name, last_name
 FROM (
     SELECT 
         first_name, 
