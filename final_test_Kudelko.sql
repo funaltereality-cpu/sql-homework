@@ -122,7 +122,7 @@ where manager_id is NULL;
 -- 4.	Таблица Employees. Получить список работников с их позициями в формате: Donald(sh_clerk)
 
 select
-CONCAT(first_name, '(', job_title, ')') 
+CONCAT(first_name, '(', replace(job_title, ' ','_'), ')') as name_post
 from employees e
 left join jobs j on j.id = e.job_id;
 
