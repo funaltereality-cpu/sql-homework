@@ -178,6 +178,16 @@ on t1.department_id = t2.department_id
 and t1.id <> t2.id
 where t1.salary = t2.salary
 ;
+-- PS. но если нужен именно вывод СКОЛЬКО, то так:
+select 
+count(*) as count_u
+from
+employees t1
+join employees t2
+on t1.department_id = t2.department_id
+and t1.id <> t2.id
+where t1.salary = t2.salary
+having count(*)> 0;
 
 -- 10.	Таблица Employees, Departaments. 
 -- Получить список department_id, department_name 
