@@ -780,7 +780,7 @@ having total_ > 0;
 -- 5. подзапрос в insert с вставкой нового запроса от клиента;
 
 insert into inquiry (inq_status, created_at, modified_at, trip_id, client_id)
-values ('pending', NOW(), NOW(),  												# почему иногда ставим values, иногда нет?
+values ('pending', NOW(), NOW(),  												
 (select trip_id from trip where description = 'Romantic tour'),
 (select client_id from client where email = 'valentina@mail.ru')); 
 
@@ -789,7 +789,7 @@ select * from inquiry where client_id = 1;
 
 -- 6. подзапрос с delete, удалить все туры из таблицы trip, по которым не было подано ни одной заявки;
 
-delete from trip t
+delete from trip
 where trip_id in (select trip_id 
 					from (select trip.trip_id from trip
 					left join inquiry i on i.trip_id = trip.trip_id
@@ -810,7 +810,7 @@ INSERT INTO trip (trip_id, description, price, category, max_capacity, city_id, 
 VALUES(5, 'Culinary tour',350,'sights', 7, 5, 5, '2025-10-08'); 
 
 -- подзапрос в DELETE c exists;
- delete from trip t
+ delete from trip
  where not exists (select * from inquiry i 
  where i.trip_id = t.trip_id);
  
@@ -836,3 +836,21 @@ select * from trip;
 
 -- включить safe mode;
 SET SQL_SAFE_UPDATES = 1;
+
+-- создать таблицу логов
+create table if not exists logs
+(
+log_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+event DATETIME NOT NULL DEFAULT NOW(), 
+record_id INT NOT NULL,
+message VARCHAR(255) NOT NULL,
+user_info VARCHAR(255) NULL,
+table_name VARCHAR(50) NULL,
+action ENUM('INSERT', 'UPDATE', 'DELETE') NULL,
+log_type ENUM('INFO', 'WARNING', 'ERROR', 'SYSTEM') NOT NULL
+);
+
+INSERT INTO LOGS(event, record_id, message, log_type)
+  VALUES (now(), 5, 'test test', 'system'),
+  (now(), 2, 'test test test', 'info'),
+  (now(), 1, 'test test test', 'error');
