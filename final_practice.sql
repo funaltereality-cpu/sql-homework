@@ -1000,3 +1000,56 @@ delimiter ;
 update inquiry
 set inq_status = 'cancelled'
 where client_id = 7;
+
+-- -----------------------------------------------------
+-- Table review
+-- -----------------------------------------------------
+
+drop table if exists review;
+
+CREATE TABLE IF NOT EXISTS review (
+   review_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+   description TEXT,
+   rating INT NOT NULL,
+   client_id INT,
+   trip_id INT,
+   date DATE NOT NULL,
+   FOREIGN KEY(client_id) REFERENCES client(client_id),
+   FOREIGN KEY(trip_id) REFERENCES trip(trip_id),
+   UNIQUE(client_id, trip_id),
+   check(description <> ' '));
+
+  INSERT INTO review (description, rating, client_id, trip_id, date)
+  VALUES ('Awesome trip', 5, 9, 3, '2025-07-13'),
+  ('The best thing to do during summer!', 5, 12, 2, '2025-10-02'),
+  ('The guide was very knowledgeable', 5, 12, 5, '2025-10-26')
+  ;
+ select * from review;
+
+-- триггер на проверку даты публикации отзыва перед поездкой before_insert;
+ drop trigger if exists review_date;
+
+delimiter $$
+
+create 
+trigger review_date
+before insert on review for each row
+begin
+	declare trip_end DATE;
+    select trip.end_date into trip_end
+    from trip 
+    where trip_id =new.trip_id;
+    
+    if new.date < trip_end then
+	SIGNAL SQLSTATE '45000' 
+    SET MESSAGE_TEXT = 'Cannot add the review before the trip ends';
+		 end if; 
+         end$$
+delimiter ;
+
+insert into review (description, rating, date, trip_id, client_id)
+VALUES('Did not like it. It was rubbish. Never again', 1, '2025-01-30', 4, 12);
+
+-- оставлено для проверки работает ли триггер: delete from review where review_id = 4;
+
+select * from review;
