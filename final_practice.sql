@@ -224,6 +224,30 @@ CREATE TABLE IF NOT EXISTS trip_driver (
     
     select * from trip_driver;
     
+    -- -----------------------------------------------------
+-- Table review
+-- -----------------------------------------------------
+
+drop table if exists review;
+
+CREATE TABLE IF NOT EXISTS review (
+   review_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+   description TEXT,
+   rating INT NOT NULL,
+   client_id INT,
+   trip_id INT,
+   review_date DATE NOT NULL,
+   FOREIGN KEY(client_id) REFERENCES client(client_id),
+   FOREIGN KEY(trip_id) REFERENCES trip(trip_id),
+   UNIQUE(client_id, trip_id),
+   check(description <> ' '));
+
+  INSERT INTO review (description, rating, client_id, trip_id, review_date)
+  VALUES ('Awesome trip', 5, 9, 3, '2025-07-13'),
+  ('The best thing to do during summer!', 5, 12, 2, '2025-10-02'),
+  ('The guide was very knowledgeable', 5, 12, 5, '2025-10-26');
+ select * from review;
+    
 -- добавить ещё 1 колонку с датой рождения
 ALTER TABLE client
 ADD date_of_birth DATE;
@@ -895,7 +919,7 @@ VALUES ('system', 'trip', 2, 'message 1' ),
   values('info', 'trip', 5, 'updated price for weekend_tour');
   commit;
  
-  -- откатить
+  -- откатить;
   start transaction;
   update trip
   set price = price*2
@@ -903,7 +927,7 @@ VALUES ('system', 'trip', 2, 'message 1' ),
   rollback;
   select * from trip;
   
-  -- 1. создание вьюшки с использованием полей 1 таблицы;
+  -- создание вьюшки с использованием полей 1 таблицы;
   create view v_cars as
   select car_make, car_code, model_year 
   , concat(car_make, ': ', model_year) as car_info
@@ -913,7 +937,7 @@ VALUES ('system', 'trip', 2, 'message 1' ),
   select * from v_cars;
   select * from driver;
   
-  -- 2. создание вьюшки с подзапросом, где вывести инфо по машине и водителю с именем Vlad;
+  -- создание вьюшки с подзапросом, где вывести инфо по машине и водителю с именем Vlad;
   create or replace view v_driver as
   select c.car_code, 
         concat(car_make, ': ', model_year) as car_info,
@@ -927,24 +951,23 @@ VALUES ('system', 'trip', 2, 'message 1' ),
   
   select * from v_driver;
   
- -- 3. обновить вью, редактировать FIAT на fiat;
+ -- обновить вью, редактировать FIAT на fiat;
  UPDATE v_cars set car_make = 'Fiat' where car_make = 'FIAT';
  
- -- 4. добавить данные во view, но не будет работать, тк insert работает только с таблицами
+ -- добавить данные во view, но не будет работать, тк insert работает только с таблицами
   insert into v_cars(car_make, car_code, model_year)
   values(Opel, BY6789, 2012);
 
--- 5. запрос с использованием представления;
+-- запрос с использованием представления;
  select car_make, car_code
  from v_cars
  where model_year = 2018
  limit 3;
  
- -- 6. удаление вью;
+ -- удаление вью;
   drop view v_driver;
 
--- prehw13
--- триггер на дискаунт при брони 3 поездок after insert;
+-- 1. триггер на дискаунт при брони 3 поездок after insert;
 drop trigger if exists discount;
 
 delimiter $$
@@ -978,7 +1001,7 @@ delimiter ;
  where client_id = 2;
  
   select * from client;
--- триггер на отмену брони after_update;
+-- 2. триггер на отмену брони after_update;
  drop trigger if exists cancellation;
 
 delimiter $$
@@ -1026,7 +1049,7 @@ CREATE TABLE IF NOT EXISTS review (
   ;
  select * from review;
 
--- триггер на проверку даты публикации отзыва перед поездкой before_insert;
+-- 3. триггер на проверку даты публикации отзыва перед поездкой before_insert;
  drop trigger if exists review_date;
 
 delimiter $$
@@ -1053,3 +1076,51 @@ VALUES('Did not like it. It was rubbish. Never again', 1, '2025-01-30', 4, 12);
 -- оставлено для проверки работает ли триггер: delete from review where review_id = 4;
 
 select * from review;
+
+-- 4. триггер before update
+drop trigger if exists price_update;
+delimiter $$
+
+create trigger price_update
+before update on trip
+for each row
+begin
+	if new.price <> old.price
+    and now() < old.end_date and now() > old.start_date
+    then signal sqlstate '45000'
+    set message_text = 'Cannot update price before the trip ends.';
+    end if;
+    end $$
+    delimiter ;
+    
+-- 5. проверка триггера before delete;
+drop trigger if exists block_review_drop;
+
+delimiter $$
+
+create trigger block_review_drop
+before delete on review
+for each row
+begin
+	if old.review_date < NOW() - INTERVAL 5 day 
+    then signal sqlstate '45000'
+    set message_text = 'You cannot delete the comment after 5 days';
+    end if;
+    end $$
+    delimiter ;
+    
+-- 6. проверка триггера after delete;  
+drop trigger if exists log_review_drop;
+
+delimiter $$
+
+create trigger log_review_drop
+after delete on review
+for each row
+begin
+	delete from logs where review_id = old.review_id;
+end $$
+
+delimiter ;
+
+
