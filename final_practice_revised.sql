@@ -3,7 +3,7 @@ CREATE DATABASE IF NOT EXISTS tours;
 USE tours;
 
 -- Table client
-drop table if exists client;
+DROP TABLE IF EXISTS client;
 
 CREATE TABLE IF NOT EXISTS client (
   client_id INT NOT NULL PRIMARY KEY auto_increment,
@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS client (
   note VARCHAR(255) DEFAULT NULL,
   status ENUM('new', 'repeated', 'VIP') DEFAULT 'new',
   CHECK(REGEXP_LIKE(phone, '^\\+[1-9][0-9]{1,14}$')));
+  
   -- изменение таблицы
 ALTER TABLE client
 ADD address VARCHAR(255) NULL;
@@ -48,7 +49,7 @@ VALUES ('Minsk','225000','Minsk region'),
 ('Nyasvizh','225004','Minsk region');
 
 -- Table operator
-drop table if exists operator;
+DROP TABLE IF EXISTS operator;
 
 CREATE TABLE IF NOT EXISTS operator (
     operator_id INT NOT NULL PRIMARY KEY auto_increment,
@@ -82,7 +83,7 @@ VALUES('rome1', 'Romantic tour'),
 ('killtheoctopus5', 'Culinary tour');
 
 -- Table trip
-drop table if exists trip;
+DROP TABLE IF EXISTS trip;
 
 CREATE TABLE IF NOT EXISTS trip (
 	trip_id INT NOT NULL PRIMARY KEY auto_increment,
@@ -109,7 +110,7 @@ VALUES ('Weekend tour',35, 2, 20, 1, 1, '2025-09-08', '2025-09-10' ),
 ('Culinary tour',350, 5, 7, 5, 5, '2025-10-08', '2025-10-13');
 
 -- Table inquiry (junction table)
-drop table if exists inquiry;
+DROP TABLE IF EXISTS inquiry;
 
 CREATE TABLE IF NOT EXISTS inquiry (
     inquiry_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -145,7 +146,7 @@ VALUES ('Volvo', 'BY1654', '2008'),
 ('FIAT', 'BY3134', '2020');
 
 -- Table driver
-drop table if exists driver;
+DROP TABLE IF EXISTS driver;
 
 CREATE TABLE IF NOT EXISTS driver (
    driver_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -163,7 +164,7 @@ CREATE TABLE IF NOT EXISTS driver (
   ('Serge', 'Stilavin', 5, 45);
   
 -- Table trip_driver
- drop table if exists trip_driver;
+ DROP TABLE IF EXISTS trip_driver;
  
 CREATE TABLE IF NOT EXISTS trip_driver (
     trip_id INT NOT NULL,
@@ -180,7 +181,7 @@ CREATE TABLE IF NOT EXISTS trip_driver (
     (1,5);
     
 -- Table review
-drop table if exists review;
+DROP TABLE IF EXISTS review;
 
 CREATE TABLE IF NOT EXISTS review (
    review_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -223,7 +224,7 @@ WHERE
     client_id BETWEEN 1 AND 11;
 
 -- Table review
-drop table if exists review;
+DROP TABLE IF EXISTS review;
 
 CREATE TABLE IF NOT EXISTS review (
    review_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -293,12 +294,12 @@ WHERE
     o.operator_id = t.operator_id;
 
 #LEFT JOIN
-select first_name, last_name, i.inq_status, i.trip_id, ci.name, t.description, date_of_birth, max_capacity
-from client c
-left join inquiry i on c.client_id = i.client_id
-left join trip t on t.trip_id = i.trip_id
-left join city ci on t.city_id = ci.city_id
-order by 4, 1;
+SELECT first_name, last_name, i.inq_status, i.trip_id, ci.name, t.description, date_of_birth, max_capacity
+FROM client c
+LEFT JOIN inquiry i ON c.client_id = i.client_id
+LEFT JOIN trip t ON t.trip_id = i.trip_id
+LEFT JOIN city ci ON t.city_id = ci.city_id
+ORDER BY 4, 1;
 
 -- Сделать выборку на 2ух таблицах с JOIN вместе с WHERE, HAVING, GROUP BY
 SELECT 
@@ -331,34 +332,34 @@ HAVING discount > 10
 ORDER BY 2 , 5;
 
 -- Выставить новую цену с 15% скидкой, округлить до целого используя round;
-select trip_id, substring_index(description, ' ', 1) t_name, price, price*0.15 as discount, 
-round((price - price*0.15), 0) as new_price from trip;
+SELECT trip_id, substring_index(description, ' ', 1) t_name, price, price*0.15 as discount, 
+ROUND((price - price*0.15), 0) AS new_price FROM trip;
 
 -- функция if;
-select * ,
-if (max_capacity >= 10, 'премия', 'штраф') бонус
-from trip;
+SELECT * ,
+IF (max_capacity >= 10, 'премия', 'штраф') бонус
+FROM trip;
  
  -- подзапрос в SELECT c exists с корелляцией по id;
- select first_name from client c
- where exists (select * from inquiry i 
- where i.client_id = c.client_id
- and inq_status = 'pending');
+ SELECT first_name FROM client c
+ WHERE EXISTS (select * FROM inquiry i 
+ WHERE i.client_id = c.client_id
+ AND inq_status = 'pending');
 
 -- отключить safe mode;
 SET SQL_SAFE_UPDATES = 0;
 
 -- подзапрос с UPDATE по обновлению мест, чтобы столбец available_seats отражал количество свободных мест;
-update trip as t
- join		   (
+UPDATE trip as t
+ JOIN		   (
 				select trip_id, 
 					count(trip_id) as booked_count from inquiry i
-				where inq_status = 'booked'
-				group by 1
+				WHERE inq_status = 'booked'
+				GROUP BY 1
                 ) 
-				as a 
-                    on a.trip_id = t.trip_id
-set t.available_seats = if(t.max_capacity is not null, t.max_capacity - a.booked_count, +1);
+				AS a 
+                    ON a.trip_id = t.trip_id
+SET t.available_seats = if(t.max_capacity is not null, t.max_capacity - a.booked_count, +1);
 
 -- Включить safe mode;
 SET SQL_SAFE_UPDATES = 1;
@@ -380,115 +381,115 @@ VALUES ('system', 'trip', 2, 'message 1' ),
   ('info', 'trip', 4, 'message 3');
   
 -- Создать транзакцию;
-  start transaction;
+  START TRANSACTION;
   
-  update trip
-  set price = price*2
-  where description = 'weekend tour';
+  UPDATE trip
+  SET price = price*2
+  WHERE description = 'weekend tour';
 
-  insert into logs (log_type, table_name, record_id, message)
-  values('info', 'trip', 5, 'updated price for weekend_tour');
-  commit;
+  INSERT INTO logs (log_type, table_name, record_id, message)
+  VALUES('info', 'trip', 5, 'updated price for weekend_tour');
+  COMMIT;
  
   -- Откатить;
-  start transaction;
-  update trip
-  set price = price*2
-  where description = 'weekend tour';
-  rollback;
+  START TRANSACTION;
+  UPDATE trip
+  SET price = price*2
+  WHERE description = 'weekend tour';
+  ROLLBACK;
   
   -- Создание вьюшки с подзапросом, где вывести инфо по машине и водителю с именем Vlad;
-  create or replace view v_driver as
-  select c.car_code, 
-        concat(car_make, ': ', model_year) as car_info,
-        (select concat(first_name, ' ', last_name, ': ', rate_hour) as d_info
-			from driver d
-			where d.car_id = c.car_id) 
-			as d_info
-			from car c
-            join driver d on d.car_id = c.car_id 
-            where d.first_name = 'Vlad';
+  CREATE OR REPLACE VIEW v_driver AS
+  SELECT c.car_code, 
+        CONCAT(car_make, ': ', model_year) as car_info,
+        (SELECT concat(first_name, ' ', last_name, ': ', rate_hour) AS d_info
+			FROM driver d
+			WHERE d.car_id = c.car_id) 
+			AS d_info
+			FROM car c
+            JOIN driver d on d.car_id = c.car_id 
+            WHERE d.first_name = 'Vlad';
  
  -- Удалить вью;
-  drop view v_driver;
+  DROP VIEW V_DRIVER;
 
 -- Создать триггер на дискаунт при брони 3 поездок after insert;
-drop trigger if exists discount;
+DROP TRIGGER IF EXISTS DISCOUNT;
 
-delimiter $$
+DELIMITER $$
 
-create 
-trigger discount 
-after insert on inquiry for each row
-begin
-	declare count_inquiry INT;
+CREATE 
+TRIGGER discount 
+AFTER INSERT ON inquiry FOR EACH ROW
+BEGIN
+	DECLARE count_inquiry INT;
         
-select count(*) INTO count_inquiry 
-from inquiry
-where client_id = NEW.client_id;
+SELECT count(*) INTO count_inquiry 
+FROM inquiry
+WHERE client_id = NEW.client_id;
         
-	if count_inquiry>=3 then 
-	update client 
-    set note = '1 trip for free' where client_id = new.client_id;
-	else 
-    update client 
-    set note = 'full price' where client_id = new.client_id;
-		 end if; 
-         end$$
-delimiter ;
+	IF count_inquiry>=3 then 
+	UPDATE CLIENT 
+    SET note = '1 trip for free' WHERE client_id = NEW.client_id;
+	ELSE 
+    UPDATE CLIENT 
+    SET note = 'full price' WHERE client_id = NEW.client_id;
+		 END IF; 
+         END$$
+DELIMITER ;
  
 -- Создать триггер на отмену брони after_update;
- drop trigger if exists cancellation;
+ DROP TRIGGER IF EXISTS CANCELLATION;
 
-delimiter $$
+DELIMITER $$
 
-create 
-trigger cancellation
-after update on inquiry for each row
-begin
-	if new.inq_status='cancelled' and old.inq_status <> 'cancelled' then 
-	update client 
-    set note = 'charge cancellation fees' where client_id = new.client_id;
-	else 
-    update client 
-    set note = null where client_id = new.client_id;
-		 end if; 
-         end$$
-delimiter ;
+CREATE 
+TRIGGER cancellation
+AFTER UPDATE ON inquiry FOR EACH ROW
+BEGIN
+	IF NEW.inq_status='cancelled' AND OLD.inq_status <> 'cancelled' THEN 
+	UPDATE client 
+    SET note = 'charge cancellation fees' WHERE client_id = NEW.client_id;
+	ELSE 
+    UPDATE client 
+    SET note = NULL WHERE client_id = NEW.client_id;
+		 END IF; 
+         END$$
+DELIMITER ;
 
 -- Создать триггер на проверку даты публикации отзыва перед поездкой before_insert;
- drop trigger if exists review_date;
+ DROP TRIGGER IF EXISTS REVIEW_DATE;
 
-delimiter $$
+DELIMITER $$
 
-create 
-trigger review_date
-before insert on review for each row
-begin
-	declare trip_end DATE;
-    select trip.end_date into trip_end
-    from trip 
-    where trip_id =new.trip_id;
+CREATE 
+TRIGGER review_date
+BEFORE INSERT ON review FOR EACH ROW
+BEGIN
+	DECLARE trip_end DATE;
+    SELECT trip.end_date into trip_end
+    FROM trip 
+    WHERE trip_id =NEW.trip_id;
     
-    if new.review_date < trip_end then
+    IF NEW.review_date < trip_end THEN
 	SIGNAL SQLSTATE '45000' 
     SET MESSAGE_TEXT = 'Cannot add the review before the trip ends';
-		 end if; 
-         end$$
-delimiter ;
+		 END IF; 
+         END$$
+DELIMITER ;
     
 -- Создать триггер before delete;
-drop trigger if exists block_review_drop;
+DROP TRIGGER IF EXISTS block_review_drop;
 
-delimiter $$
+DELIMITER $$
 
-create trigger block_review_drop
-before delete on review
-for each row
-begin
-	if old.review_date < NOW() - INTERVAL 5 day 
-    then signal sqlstate '45000'
-    set message_text = 'You cannot delete the comment after 5 days';
-    end if;
-    end $$
-    delimiter ;
+CREATE TRIGGER block_review_drop
+BEFORE DELETE ON review
+FOR EACH ROW
+BEGIN
+	IF OLD.review_date < NOW() - INTERVAL 5 day 
+    THEN SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'You cannot delete the comment after 5 days';
+    END IF;
+    END $$
+    DELIMITER ;
