@@ -68,7 +68,7 @@ VALUES ('Elena','Smith','OP4889','+375296888329', 'elenafb@mail.ru'),
 ('Marie','Curie','BY5432', '+375331210320', 'mariefb@mail.ru');
 
 -- Table category: внешний ключ хранится в таблице со стороны MANY (n) в таблице trip_id
-drop table if exists category;
+DROP TABLE IF EXISTS category;
 
 CREATE TABLE IF NOT EXISTS category (
 category_id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -391,14 +391,14 @@ VALUES ('system', 'trip', 2, 'message 1' ),
   VALUES('info', 'trip', 5, 'updated price for weekend_tour');
   COMMIT;
  
-  -- Откатить;
+-- Откатить;
   START TRANSACTION;
   UPDATE trip
   SET price = price*2
   WHERE description = 'weekend tour';
   ROLLBACK;
   
-  -- Создание вьюшки с подзапросом, где вывести инфо по машине и водителю с именем Vlad;
+-- Создание вьюшки с подзапросом, где вывести инфо по машине и водителю с именем Vlad;
   CREATE OR REPLACE VIEW v_driver AS
   SELECT c.car_code, 
         CONCAT(car_make, ': ', model_year) as car_info,
@@ -410,7 +410,7 @@ VALUES ('system', 'trip', 2, 'message 1' ),
             JOIN driver d on d.car_id = c.car_id 
             WHERE d.first_name = 'Vlad';
  
- -- Удалить вью;
+-- Удалить вью;
   DROP VIEW V_DRIVER;
 
 -- Создать триггер на дискаунт при брони 3 поездок after insert;
