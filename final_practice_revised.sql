@@ -164,7 +164,7 @@ CREATE TABLE IF NOT EXISTS driver (
   ('Serge', 'Stilavin', 5, 45);
   
 -- Table trip_driver
- DROP TABLE IF EXISTS trip_driver;
+DROP TABLE IF EXISTS trip_driver;
  
 CREATE TABLE IF NOT EXISTS trip_driver (
     trip_id INT NOT NULL,
@@ -195,10 +195,10 @@ CREATE TABLE IF NOT EXISTS review (
    UNIQUE(client_id, trip_id),
    check(description <> ' '));
 
-  INSERT INTO review (description, rating, client_id, trip_id, review_date)
-  VALUES ('Awesome trip', 5, 9, 3, '2025-07-13'),
-  ('The best thing to do during summer!', 5, 12, 2, '2025-10-02'),
-  ('The guide was very knowledgeable', 5, 12, 5, '2025-10-26');
+INSERT INTO review (description, rating, client_id, trip_id, review_date)
+VALUES ('Awesome trip', 5, 9, 3, '2025-07-13'),
+('The best thing to do during summer!', 5, 12, 2, '2025-10-02'),
+('The guide was very knowledgeable', 5, 12, 5, '2025-10-26');
     
 -- Добавить колонку с датой рождения
 ALTER TABLE client
@@ -265,7 +265,7 @@ FROM
     inquiry;
 
 -- Cделать выборку со сравнением времени
- SELECT 
+SELECT 
     inquiry_id,
     created_at,
     modified_at,
@@ -340,18 +340,18 @@ SELECT * ,
 IF (max_capacity >= 10, 'премия', 'штраф') бонус
 FROM trip;
  
- -- подзапрос в SELECT c exists с корелляцией по id;
- SELECT first_name FROM client c
- WHERE EXISTS (select * FROM inquiry i 
- WHERE i.client_id = c.client_id
- AND inq_status = 'pending');
+-- подзапрос в SELECT c exists с корелляцией по id;
+SELECT first_name FROM client c
+WHERE EXISTS (select * FROM inquiry i 
+WHERE i.client_id = c.client_id
+AND inq_status = 'pending');
 
--- отключить safe mode;
+-- Отключить safe mode;
 SET SQL_SAFE_UPDATES = 0;
 
 -- подзапрос с UPDATE по обновлению мест, чтобы столбец available_seats отражал количество свободных мест;
 UPDATE trip as t
- JOIN		   (
+JOIN		   (
 				select trip_id, 
 					count(trip_id) as booked_count from inquiry i
 				WHERE inq_status = 'booked'
@@ -373,34 +373,34 @@ CREATE TABLE IF NOT EXISTS logs (
     record_id INT NULL,
     action ENUM('INSERT', 'UPDATE', 'DELETE') NULL,
     message VARCHAR(255) NOT NULL,
-    user_info VARCHAR(100) NULL
-);
+    user_info VARCHAR(100) NULL);
+    
 INSERT into logs (log_type, table_name, record_id, message)
 VALUES ('system', 'trip', 2, 'message 1' ),
   ('error', 'trip', 3, 'message 2'),
   ('info', 'trip', 4, 'message 3');
   
 -- Создать транзакцию;
-  START TRANSACTION;
+START TRANSACTION;
   
-  UPDATE trip
-  SET price = price*2
-  WHERE description = 'weekend tour';
+UPDATE trip
+SET price = price*2
+WHERE description = 'weekend tour';
 
-  INSERT INTO logs (log_type, table_name, record_id, message)
-  VALUES('info', 'trip', 5, 'updated price for weekend_tour');
-  COMMIT;
+INSERT INTO logs (log_type, table_name, record_id, message)
+VALUES('info', 'trip', 5, 'updated price for weekend_tour');
+COMMIT;
  
 -- Откатить;
-  START TRANSACTION;
-  UPDATE trip
-  SET price = price*2
-  WHERE description = 'weekend tour';
-  ROLLBACK;
+START TRANSACTION;
+UPDATE trip
+SET price = price*2
+WHERE description = 'weekend tour';
+ROLLBACK;
   
 -- Создание вьюшки с подзапросом, где вывести инфо по машине и водителю с именем Vlad;
-  CREATE OR REPLACE VIEW v_driver AS
-  SELECT c.car_code, 
+CREATE OR REPLACE VIEW v_driver AS
+SELECT c.car_code, 
         CONCAT(car_make, ': ', model_year) as car_info,
         (SELECT concat(first_name, ' ', last_name, ': ', rate_hour) AS d_info
 			FROM driver d
@@ -411,7 +411,7 @@ VALUES ('system', 'trip', 2, 'message 1' ),
             WHERE d.first_name = 'Vlad';
  
 -- Удалить вью;
-  DROP VIEW V_DRIVER;
+DROP VIEW V_DRIVER;
 
 -- Создать триггер на дискаунт при брони 3 поездок after insert;
 DROP TRIGGER IF EXISTS DISCOUNT;
@@ -439,7 +439,7 @@ WHERE client_id = NEW.client_id;
 DELIMITER ;
  
 -- Создать триггер на отмену брони after_update;
- DROP TRIGGER IF EXISTS CANCELLATION;
+DROP TRIGGER IF EXISTS CANCELLATION;
 
 DELIMITER $$
 
@@ -458,7 +458,7 @@ BEGIN
 DELIMITER ;
 
 -- Создать триггер на проверку даты публикации отзыва перед поездкой before_insert;
- DROP TRIGGER IF EXISTS REVIEW_DATE;
+DROP TRIGGER IF EXISTS REVIEW_DATE;
 
 DELIMITER $$
 
