@@ -84,7 +84,8 @@ VALUES (100, 'Steven',	'King', '2013-06-17', 'AD_PRES', 24000, 90,	null),
 (203,'Susan', 'Jacobs', '2012-06-07', 'HR_REP',	6500, 110, 101),
 (204,'Hermann', 'Brown', '2012-06-07', 'HR_REP', 10000, 80, 101),
 (205,'Shelley','Higgins', '2012-06-07', 'AD_PRES', 	12008,	110,101),
-(206,'William', 'Gietz', '2012-06-07', 'AD_PRES', 8300, 110, 205);
+(206,'William', 'Gietz', '2012-06-07', 'AD_PRES', 8300, 110, 205)
+;
 
 select * from employees;
 
@@ -98,14 +99,17 @@ SELECT * FROM jobs;
 -- 1.	Таблица Employees. Получить список всех сотрудников из 60го отдела (department_id) с зарплатой(salary), большей 4000
 select id, first_name, last_name, salary from employees
 where department_id = 60
-having salary > 4000;
+having salary > 4000; -- не стоит здесь использовать having, т.к. логически он не нужен, нет агрегатной функции 
+
+select id, first_name, last_name, salary from employees
+where department_id = 60
+and salary > 4000; -- where здесь предпочтительнее, т.к. быстрее, нет сложной логики и группировки. WHERE работает до группировки
 
 -- 2. Таблица Employees. Получить список всех сотрудников, у которых в имени содержатся минимум 2 буквы 'n' 
 select * from employees
-where first_name like '%n%_%n%' or first_name like '%nn%';
+where first_name like '%n%n%'; -- ищет имена с минимум 2мя буквами n
 
 -- or 
-
 	SELECT 
     first_name, 
 	last_name
@@ -114,17 +118,24 @@ where first_name like '%n%_%n%' or first_name like '%nn%';
 where (length(first_name) - length(replace(lower(first_name), 'n',''))) >= 2
   order by 1 desc;
 
--- 3.	Таблица Employees. Получить список всех ID менеджеров;
+-- 3. Таблица Employees. Получить список всех ID менеджеров;
 
-select * from employees
-where manager_id is NULL;
+select distinct manager_id from employees -- мы ищем те manager_id на которые ccылаются другие строки, т.е. кто руководит людьми, 
+where manager_id is not NULL; -- если NUll – это CEO; 
+
+select distinct em.manager_id as 'submit to', em.id as 'id', em.first_name, em.last_name -- найти всё из предыдущего запроса 
+from employees e -- и вывести имена и фамилии менеджеров и кому они подчиняются
+join employees em 
+on em.id = e.manager_id;
 
 -- 4.	Таблица Employees. Получить список работников с их позициями в формате: Donald(sh_clerk)
 
 select
-CONCAT(first_name, '(', replace(job_title, ' ','_'), ')') as name_post
+CONCAT(first_name, '(', replace(lower(job_id), ' ','_'), ')') as name_post
 from employees e
 left join jobs j on j.id = e.job_id;
+
+-- (length(first_name) - length(replace(lower(first_name), 'n',''))) >= 2 
 
 -- 5. Таблица Departments. Получить первое слово из имени департамента для тех у кого в названии больше одного слова
 
@@ -133,26 +144,33 @@ select substring_index(department_name, ' ', 1) as first_word
 from departments
 having word_count >=2 ;
 
--- 6.	Таблица Employees. Получить список всех сотрудников, которые работают в компании больше 10 лет
+-- 6. Таблица Employees. Получить список всех сотрудников, которые работают в компании больше 10 лет
 
-select * 
+select id, hire_date,                    -- не самый лучший вариант с NOW для этого запроса
+round(datediff(NOW(), hire_date)/365,1)
 from employees
 having round(datediff(NOW(), hire_date)/365,0)  > 10;
 
--- or c выведением work_exp:
+-- NOW() подходит, когда нужны секунды и точность момента
+-- CURDATE() подходит, когда считаем в годах, днях для
+														-- стажа
+                                                        -- возраста
+                                                        -- сколько лет договору
+                                                        -- сколько лет прошло с регистрации
 
-select * 
-, round(datediff(NOW(), hire_date)/365,0) as work_exp
+-- лучше с timestampdiff(year, hire_date, curdate()), т.к. он выводит полные годы без округлений:
+
+select id, hire_date
+,timestampdiff(YEAR, hire_date, CURDATE()) as work_exp
 from employees
-having work_exp > 10;
+where timestampdiff(YEAR, hire_date, CURDATE()) >= 10;
 
--- 7.	Таблица Employees. Получить список всех сотрудников, которые пришли на работу в августе 2012го года. 
+-- 7. Таблица Employees. Получить список всех сотрудников, которые пришли на работу в августе 2012го года. 
 select * 
 from employees
-where MONTH(hire_date) = 8 and YEAR(hire_date) = 2012
-;
+where MONTH(hire_date) = 8 and YEAR(hire_date) = 2012;
 
--- 8.Сколько сотрудников имена которых начинается с одной и той же буквы? 
+-- 8. Сколько сотрудников имена которых начинается с одной и той же буквы? 
 -- Сортировать по количеству. Показывать только те где количество больше 1;
 
 SELECT name_count, first_name, last_name
@@ -165,10 +183,20 @@ FROM (
     FROM employees
 ) AS t
 WHERE name_count > 1
-;
+order by 1 desc;
 
--- Сколько сотрудников которые работают в одном и тоже отделе и получают одинаковую зарплату? 
-select t1.first_name as first_name1,
+-- or
+
+SELECT 
+    LEFT(first_name, 1) as first_letter,
+    COUNT(*) as name_count				-- сначала группируем
+FROM employees							-- потом count(*) считает количество строк в группе
+GROUP BY LEFT(first_name, 1)
+HAVING COUNT(*) > 1;
+
+-- 9.Сколько сотрудников которые работают в одном и тоже отделе и получают одинаковую зарплату? 
+select t1.salary, t1.department_id,
+t1.first_name as first_name1,
 t2.first_name as first_name2,
 t1.department_id as department_id
 from
@@ -178,8 +206,21 @@ on t1.department_id = t2.department_id
 and t1.id <> t2.id
 where t1.salary = t2.salary
 ;
--- PS. но если нужен именно вывод СКОЛЬКО, то так:
-select 
+
+-- or
+
+select t1.salary, t1.department_id, count(*)
+from
+employees t1
+join employees t2
+on t1.department_id = t2.department_id
+and t1.id <> t2.id
+where t1.salary = t2.salary
+group by 1, 2
+;
+
+-- PS. но если нужен именно вывод СКОЛЬКО, то через self-join:
+select
 count(*) as count_u
 from
 employees t1
@@ -189,7 +230,7 @@ and t1.id <> t2.id
 where t1.salary = t2.salary
 having count(*)> 0;
 
--- 10.	Таблица Employees, Departaments. 
+-- 10. Таблица Employees, Departaments. 
 -- Получить список department_id, department_name 
 -- и округленную среднюю зарплату работников в каждом департаменте. 
 
@@ -197,5 +238,4 @@ select d.id, department_name, round(avg(salary), 2) as average_s
 from departments d
 inner join Employees e
 on e.department_id = d.id
-group by 1, 2
-;
+group by 1, 2;
