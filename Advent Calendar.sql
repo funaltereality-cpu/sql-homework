@@ -185,7 +185,8 @@ commit;
 # тут только два начальных подарка в toys, поэтому сделала фильтры, но можно без них, т.к. выведет ту же инф;
 select * from gifts
 where category = 'toys'
-having stock > 0 and price between 10 and 100
+and stock > 0 
+and price between 10 and 100
 order by price
 ;
 
