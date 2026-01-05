@@ -152,6 +152,7 @@ INSERT INTO events (person_id, event_date, description) VALUES
 (5, '2021-06-15', 'Very old event for cleanup'),
 (1, '2025-12-06', 'Elf workshop shift');
 
+
 -- Task 1: добавить 5 записей в people и 8 в gifts с рождественскими именами. 
 
 start transaction;
@@ -174,6 +175,7 @@ INSERT INTO gifts (name, category, price, stock) VALUES
 ('Extra warm parka', 'Clothing', 700.00, 5),
 ('Laneige lip mask set', 'Cosmetics', 110.00, 3)
 ;
+
 
 commit;
 
@@ -203,4 +205,5 @@ group by p.name
 order by 2 desc
 limit 3
 ;
+
 
