@@ -198,7 +198,7 @@ inner join gifts g on g.gift_id = o.gift_id
 where order_date between '2025-12-01' and '2025-12-31'
 ;
 
--- Task 4: : посчитать общую сумму, потраченную каждым человеком. Вызов: вывести топ-3 тратящих больше всего.
+-- Task 4: посчитать общую сумму, потраченную каждым человеком. Вызов: вывести топ-3 тратящих больше всего.
 select p.name, sum(o.quantity*g.price) as 'total' from orders o
 inner join people p on p.person_id = o.person_id
 inner join gifts g on g.gift_id = o.gift_id
@@ -207,4 +207,16 @@ order by 2 desc
 limit 3
 ;
 
+-- Task 5: найти 5 самых заказываемых подарков по сумме quantity. Вызов: показать процент от общего числа заказанных единиц.
 
+select quantity from orders;
+select * from orders;
+
+select sum(quantity) as 'итого подарков', g.name, 
+round((sum(quantity) / (select sum(quantity) from orders) * 100),0) as percent
+from orders o
+inner join gifts g on g.gift_id = o.gift_id
+group by o.gift_id
+order by sum(quantity) desc
+limit 5
+;
