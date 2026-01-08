@@ -208,10 +208,6 @@ limit 3
 ;
 
 -- Task 5: найти 5 самых заказываемых подарков по сумме quantity. Вызов: показать процент от общего числа заказанных единиц.
-
-select quantity from orders;
-select * from orders;
-
 select sum(quantity) as 'итого подарков', g.name, 
 round((sum(quantity) / (select sum(quantity) from orders) * 100),0) as percent
 from orders o
@@ -219,4 +215,12 @@ inner join gifts g on g.gift_id = o.gift_id
 group by o.gift_id
 order by sum(quantity) desc
 limit 5
+;
+
+-- Task 6: выбрать заказы между 1 и 31 декабря. Вызов: сгруппировать по дню и показать количество заказов.
+select order_date, sum(quantity) total_orders 
+from orders
+where order_date between '2025-12-01' and '2025-12-31'
+group by order_date
+order by 1
 ;
