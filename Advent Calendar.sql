@@ -224,3 +224,95 @@ where order_date between '2025-12-01' and '2025-12-31'
 group by order_date
 order by 1
 ;
+-- Task 7 (LEVEL: HARD): при выполнении заказа уменьшить `stock`. Вызов: проверка `stock >= quantity` и откат при нехватке;
+-- создание триггера before insert 
+DROP TRIGGER IF EXISTS gifts_check_stock;
+
+DELIMITER $$
+
+CREATE TRIGGER gifts_check_stock
+BEFORE INSERT ON orders
+FOR EACH ROW
+BEGIN
+    DECLARE current_stock INT; -- описываем настоящий сток
+
+    SELECT stock  -- получаем текущий запас подарков
+    INTO current_stock
+    FROM gifts
+    WHERE gift_id = NEW.gift_id;
+
+    IF current_stock IS NULL THEN -- проверяем, существует ли такой подарок
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Gift not found';
+    END IF;
+
+    IF NEW.quantity > current_stock THEN -- проверяем, достаточно ли товара на складе
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Not enough stock';
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- создание триггера after insert
+
+-- здесь также НУЖЕН! триггер на автоматическое считывание количества стока после заказа, так как, если новый заказ будет с меньшим
+-- количеством чем в стоке, то будет двойной заказ и сток будет отрицательным, а мы даже не будем знать об этом
+
+drop trigger if exists gifts_stock_after_insert;
+
+DELIMITER $$
+
+create trigger gifts_stock_after_insert
+after insert on orders
+for each row
+begin
+        update gifts -- обновляем количество товара
+        set stock = gifts.stock - NEW.quantity -- он знает, что я беру из другой таблицы?
+        where gift_id = new.gift_id;
+END$$
+
+DELIMITER ;
+
+select * from gifts
+where gift_id = 5;
+select * from orders
+where gift_id = 5;
+
+INSERT INTO orders (person_id, gift_id, quantity, order_date, shipped, gift_wrapped) VALUES
+(3, 5, 1, '2024-12-16', TRUE, FALSE);
+
+update gifts 				 # проверка как сработал insert и триггер и обновление информации о заказах. Можно делать вручную, 
+join (select orders.gift_id, # но лучше поставить триггер, который будет обновлять информацию автоматически
+		sum(orders.quantity) as total 
+        from orders 
+        group by orders.gift_id) as o
+on gifts.gift_id = o.gift_id
+set gifts.stock = gifts.stock - o.total;
+
+-- Task 8: Удалить `events` старше 2 лет;
+
+select event_date
+from events
+where YEAR(event_date) + 2 <= 2025;
+
+delete
+from events
+where year(event_date) + 2 <=2025;
+
+-- Task 9: LIKE, полнотекст. найти `decorations`, где `material` содержит 'wood' или `name` содержит 'star'.  
+# Cоздать полнотекстовый индекс и выполнить MATCH...AGAINST
+
+select * 								#здесь обычный query через like
+from decorations
+where material like 'wood' 
+or name like 'star';
+
+alter table decorations					#здесь добавляем полнотекстовый индекс в таблицу, чтобы искать слова
+add fulltext index idx(material, name);
+
+show index from decorations;			#здесь можем увидеть созданный индекс
+
+select * from decorations				#здесь поиск по индексу и ВАЖНО! два слова в поиске пишем без запятой
+where match(material, name) 			#выведёт строки, имеющие по крайней мере 1 из этих слов
+against('wood star');
