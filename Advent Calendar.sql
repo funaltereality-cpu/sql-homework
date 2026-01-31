@@ -316,3 +316,33 @@ show index from decorations;			#здесь можем увидеть созда�
 select * from decorations				#здесь поиск по индексу и ВАЖНО! два слова в поиске пишем без запятой
 where match(material, name) 			#выведёт строки, имеющие по крайней мере 1 из этих слов
 against('wood star');
+
+-- Task 10: AVG, MIN, MAX, GROUP BY. Задача: вывести среднюю, минимальную и максимальную цену по категориям подарков. 
+# Вызов: добавить HAVING для категорий с >3 товарами.
+
+select category
+, min(price)
+, max(price)
+, avg(price) from gifts
+group by category
+having count(*) >3;						#здесь лучше count(*) т.к. считает все строки в группе и не зависит от null
+										# count(category) считала бы только строки, где category is not null
+-- Task 11: CASE. 
+# Классифицировать товары как дешёвые (<20), средние, дорогие (>100) и посчитать количество. Вывести процент от полного числа
+
+select 
+round((sum(stock) / (select sum(stock) from gifts)* 100),0) as 'percent',
+count(*) as 'total by price',					#здесь также count(*) для подсчёта всех строк в группе
+case 
+when price < 20 then 'дешёвые' 
+when price > 100 then 'дорогие'
+else 'средние'
+	end as 'price range'
+from gifts
+group by case 							#group by с полной прописской функции case, тк иначе не сработает
+when price < 20 then 'дешёвые' 
+when price > 100 then 'дорогие'
+else 'средние'
+	end 
+order by 'price range'
+;
