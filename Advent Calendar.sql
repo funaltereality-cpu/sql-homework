@@ -339,10 +339,19 @@ when price > 100 then 'дорогие'
 else 'средние'
 	end as 'price range'
 from gifts
-group by case 							#group by с полной прописской функции case, тк иначе не сработает
+group by case 							#group by с полной пропиской функции case, тк иначе не сработает
 when price < 20 then 'дешёвые' 
 when price > 100 then 'дорогие'
 else 'средние'
 	end 
 order by 'price range'
+;
+-- Task 12: найти людей, купивших подарок дороже средней цены всех подарков
+-- ps. Формулировка вызова непонятна: переписать через JOIN подзапрос поиска среднего. 
+select p.name
+, g.name
+from people p
+join orders o on p.person_id = o.person_id
+join gifts g on g.gift_id = o.gift_id
+where price > (select avg(price) from gifts)
 ;
