@@ -348,10 +348,78 @@ order by 'price range'
 ;
 -- Task 12: найти людей, купивших подарок дороже средней цены всех подарков
 -- ps. Формулировка вызова непонятна: переписать через JOIN подзапрос поиска среднего. 
-select p.name
+select p.name 												
 , g.name
 from people p
 join orders o on p.person_id = o.person_id
 join gifts g on g.gift_id = o.gift_id
 where price > (select avg(price) from gifts)
+;
+
+-- Task 13: Навык: Множественные JOIN. Задача: вывести людей, их заказы и связанные украшения/песни. 
+#(ps. но у нас нет связанных украшений и песен...?)
+USE ChristmasDB;
+select * from orders;
+select * from people;
+
+select p.name, o.gift_id from people p
+left join orders o on p.person_id = o.person_id;
+
+-- Task 14: Навык: ALTER TABLE.  
+#Задача: добавить `gift_wrapped BOOLEAN DEFAULT FALSE` в `orders`.  
+#Вызов: пометить TRUE для заказов праздничной недели.
+
+ALTER TABLE orders ADD gift_wrapped1 BOOLEAN DEFAULT FALSE  AFTER gift_wrapped; 
+
+update orders													#если я правильно поняла условие, то вот через set можно
+set gift_wrapped1 = 1
+where order_date between '2025-12-23' and '2025-12-31'
+;
+
+-- Task 15: Навык: JOIN, агрегаты.  
+#Задача: найти 5 самых длинных песен и показать их настроение.  
+#Вызов: вычислить среднюю длину по настроению. 
+
+select title
+, mood
+, length_seconds as length
+from songs
+order by 3 desc
+;
+select round(avg (length_seconds)/60, 0) 
+as 'avg length/min'
+from songs;
+
+-- Task 16: Навык: Оконные функции.  
+#Задача: ранжировать подарки по сумме потраченной суммы для каждого человека. Ранжируем по каждому человеку.
+
+select dense_rank() over 
+(partition by o.person_id
+						order by sum(g.price*o.quantity) desc
+                        ) "rank"
+, o.person_id
+, g.gift_id
+, g.name
+from gifts g
+inner join orders o on o.gift_id = g.gift_id
+group by 2,3,4
+order by "rank", o.person_id
+;
+
+#ниже не является решением задачи, но стоит учесть для проставки значения для каждой строчки
+select null as "rank"
+, g.name
+, g.price
+, o.person_id
+from gifts g
+inner join orders o on o.gift_id = g.gift_id
+;
+
+select dense_rank() over w as "rank"
+, g.name
+, g.price
+, o.person_id
+from gifts g
+inner join orders o on o.gift_id = g.gift_id
+window w as (order by price desc)				#создание оконной функции, она ничего не делает, но зато в селекте проставляется ранжирование
 ;
