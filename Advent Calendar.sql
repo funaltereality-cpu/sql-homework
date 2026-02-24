@@ -415,7 +415,7 @@ from gifts g
 inner join orders o on o.gift_id = g.gift_id
 ;
 
-select dense_rank() over w as "rank"
+select distinct dense_rank() over w as "rank"
 , g.name
 , g.price
 , o.person_id
@@ -423,3 +423,30 @@ from gifts g
 inner join orders o on o.gift_id = g.gift_id
 window w as (order by price desc)				#создание оконной функции, она ничего не делает, но зато в селекте проставляется ранжирование
 ;
+
+-- Task 17: симулировать одновременные покупки одного подарка двумя пользователями;
+-- Решение: создаю две разные вкладки и проверяю, что разные соединения с помощью SELECT CONNECTION_ID(); 
+-- Когда вижу, что соединения разные, то в 1 вкладке начинаю транзакцию:
+start transaction; 
+ 
+-- и начинаю менять сток в таблице gifts;
+update gifts
+set stock = stock - 1
+where gift_id = 5;
+
+-- параллельно во второй также начинаю транзакцию
+start transaction;
+
+-- и меняю сток также:
+update gifts
+set stock = stock - 1
+where gift_id = 5;
+
+-- но не могу закончить операцию по изменению, DB грузит, так как первая операция в первой вкладке осталась без commit
+-- когда в первой вкладке делаю
+commit;
+-- то автоматически во второй вкладке выполняется операция
+
+-- также нужно во второй вкладке сделать commit, так чтобы в первой вкладке отобразилась инфо после операции во второй вкладке
+
+
