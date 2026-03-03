@@ -449,4 +449,64 @@ commit;
 
 -- также нужно во второй вкладке сделать commit, так чтобы в первой вкладке отобразилась инфо после операции во второй вкладке
 
+-- Task 18: Навык: Подзапросы, логика рекомендаций.   
+#Задача: предложить каждому человеку подарок из категории, которую он чаще всего заказывает.
+#Здесь я сломала голову с этими подзапросами
 
+select o.person_id
+, g.category
+, o.quantity
+,concat('Dear ', p.name, ', we recommend ', (g.name)) as recommendation
+from orders o
+inner join gifts g on g.gift_id = o.gift_id
+left join people p on p.person_id = o.person_id
+	where o.quantity > 1
+	and	o.quantity = (
+						select
+						max(quantity) from 
+						orders o2
+						where o2.person_id = o.person_id
+)
+order by 1 asc;
+
+-- Task 19: CREATE VIEW.  
+# Задача: создать представление`v_top_spenders` с людьми, потратившими >100.
+# Not updatable
+
+create view v_top_spenders as
+select p.name
+,sum(g.price*o.quantity) as total_sum
+from orders o
+inner join gifts g on g.gift_id = o.gift_id
+left join people p on p.person_id = o.person_id
+group by p.name
+having total_sum > 100
+;
+
+select * from v_top_spenders;
+
+update v_top_spenders set name = "Masha Petrova" where name = "Maria Petrova";
+
+-- Task 20: создать `orders_december_backup` с копией заказов за декабрь
+
+CREATE TABLE orders_december_backup as
+SELECT * from orders
+where order_date between "2025-12-01" and "2025-12-31";
+
+#or
+
+CREATE TABLE orders_december_backup as
+SELECT * from orders
+where order_date >= "2025-12-01" 
+and order_date <="2025-12-31";
+
+select * from orders_december_backup;
+
+#удаляю запись для будущей проверки back-up
+delete from orders
+where order_id = 1;
+
+#вставляю запись из бэкапа обратно;
+insert into orders
+select * from orders_december_backup
+where order_id = 1;
