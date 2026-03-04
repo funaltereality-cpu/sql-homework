@@ -510,3 +510,58 @@ where order_id = 1;
 insert into orders
 select * from orders_december_backup
 where order_id = 1;
+
+-- Task 21: Добавление JSON колонки, затем JSON_EXTRACT.  
+#Задача: добавить `attributes` в `gifts` и выбрать подарки с цветом 'red'
+
+#удаляет колонку
+alter table gifts drop attributes;
+
+alter table gifts add attributes json;
+
+update gifts 
+set attributes = case gift_id
+	when 1 then '{"colour": "red"}'
+	when 2 then '{"colour": "yellow"}'
+	when 3 then '{"colour": "violet"}'
+	when 4 then '{"colour": "red"}'
+    when 5 then '{"colour": "black"}'
+	when 6 then '{"colour": "grey"}'
+	when 7 then '{"colour": "blue"}'
+	when 8 then '{"colour": "red"}'
+	when 9 then '{"colour": "hot pink"}'
+	when 10 then '{"colour": "red"}'
+	when 11 then '{"colour": "blue"}'
+	when 12 then '{"colour": "white"}'
+	when 13 then '{"colour": "purple"}'
+	when 14 then '{"colour": "yellow"}'
+	when 15 then '{"colour": "pink"}'
+    when 16 then '{"colour": "red"}'
+    when 17 then '{"colour": "black"}'
+    when 18 then '{"colour": "red"}'
+    when 19 then '{"colour": "grey"}'
+    when 20 then '{"colour": "pink"}'
+end 
+where gift_id between 1 and 20;
+
+#json_extract – оставляем название колонки, и знак $ в начале для обозначения начала path,значение берём в ОДНИ кавычки
+
+select * from gifts
+where json_extract(attributes, '$.colour') = 'red';
+
+-- Task 22: CREATE INDEX, EXPLAIN.  
+#Задача: добавить индекс на `orders(order_date)` и сравнить `EXPLAIN`.
+
+#сначала сравниваем до, чтобы затем если что-то изменится после добавления индекса, увидеть разницу
+
+explain 
+select * from orders
+where order_date = '2025-12-05';
+
+alter table orders add index od (order_date);
+
+#если нужно удалить, то используем
+drop index od on orders;
+
+explain select * from orders
+where order_date = '2025-12-05';
