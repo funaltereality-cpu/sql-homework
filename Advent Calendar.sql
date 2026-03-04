@@ -565,3 +565,7 @@ drop index od on orders;
 
 explain select * from orders
 where order_date = '2025-12-05';
+
+-- Task 23: GRANT, REVOKE.  
+#Задача: создать пользователя `elf_user` с правами только на SELECT в `gifts`.  
+#Вызов: протестировать подключение под этим пользователем.
